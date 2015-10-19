@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cc.congyi.persistence.mybatis.MemberMapper" >
+  <resultMap id="BaseResultMap" type="cc.congyi.model.Member" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="nickname" property="nickname" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="INTEGER" />
+    <result column="head_img_url" property="headImgUrl" jdbcType="VARCHAR" />
+    <result column="third_account_type" property="thirdAccountType" jdbcType="INTEGER" />
+    <result column="third_account_id" property="thirdAccountId" jdbcType="VARCHAR" />
+    <result column="union_id" property="unionId" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    m.id, m.nickname, m.sex, m.head_img_url, m.third_account_type, m.third_account_id, m.union_id
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from member m
+    where m.id = #{id,jdbcType=INTEGER}
+  </select>
+  <insert id="insert" parameterType="cc.congyi.model.Member" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into member (nickname, sex, head_img_url, 
+      third_account_type, third_account_id, union_id
+      )
+    values (#{nickname,jdbcType=VARCHAR}, #{sex,jdbcType=INTEGER}, #{headImgUrl,jdbcType=VARCHAR}, 
+      #{thirdAccountType,jdbcType=INTEGER}, #{thirdAccountId,jdbcType=VARCHAR}, #{unionId,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="cc.congyi.model.Member" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into member
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="nickname != null" >
+        nickname,
+      </if>
+      <if test="sex != null" >
+        sex,
+      </if>
+      <if test="headImgUrl != null" >
+        head_img_url,
+      </if>
+      <if test="thirdAccountType != null" >
+        third_account_type,
+      </if>
+      <if test="thirdAccountId != null" >
+        third_account_id,
+      </if>
+      <if test="unionId != null" >
+        union_id,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="nickname != null" >
+        #{nickname,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        #{sex,jdbcType=INTEGER},
+      </if>
+      <if test="headImgUrl != null" >
+        #{headImgUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="thirdAccountType != null" >
+        #{thirdAccountType,jdbcType=INTEGER},
+      </if>
+      <if test="thirdAccountId != null" >
+        #{thirdAccountId,jdbcType=VARCHAR},
+      </if>
+      <if test="unionId != null" >
+        #{unionId,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="cc.congyi.model.Member" >
+    update member
+    <set >
+      <if test="nickname != null" >
+        nickname = #{nickname,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        sex = #{sex,jdbcType=INTEGER},
+      </if>
+      <if test="headImgUrl != null" >
+        head_img_url = #{headImgUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="thirdAccountType != null" >
+        third_account_type = #{thirdAccountType,jdbcType=INTEGER},
+      </if>
+      <if test="thirdAccountId != null" >
+        third_account_id = #{thirdAccountId,jdbcType=VARCHAR},
+      </if>
+      <if test="unionId != null" >
+        union_id = #{unionId,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="cc.congyi.model.Member" >
+    update member
+    set nickname = #{nickname,jdbcType=VARCHAR},
+      sex = #{sex,jdbcType=INTEGER},
+      head_img_url = #{headImgUrl,jdbcType=VARCHAR},
+      third_account_type = #{thirdAccountType,jdbcType=INTEGER},
+      third_account_id = #{thirdAccountId,jdbcType=VARCHAR},
+      union_id = #{unionId,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

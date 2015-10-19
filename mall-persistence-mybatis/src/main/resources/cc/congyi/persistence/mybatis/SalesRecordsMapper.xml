@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cc.congyi.persistence.mybatis.SalesRecordsMapper" >
+  <resultMap id="BaseResultMap" type="cc.congyi.model.SalesRecords" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
+    <result column="dealer_id" property="dealerId" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="VARCHAR" />
+    <result column="last_edit_time" property="lastEditTime" jdbcType="VARCHAR" />
+    <result column="is_delete" property="isDelete" jdbcType="CHAR" />
+  </resultMap>
+  <resultMap id="withDealerResultMap" type="cc.congyi.model.SalesRecords" extends="BaseResultMap">
+    <result column="organization_name" property="organizationName" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    srs.id, srs.code, srs.dealer_id, srs.create_time, srs.last_edit_time, srs.is_delete
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from sales_records srs
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+
+  <select id="querySalesRecordsConditionWithPage" resultMap="withDealerResultMap" parameterType="map" >
+    select
+    <include refid="Base_Column_List" />, dr.organization_name
+    from sales_records srs left join dealer dr on srs.dealer_id = dr.id
+    <include refid="whereCondition" />
+    order by srs.create_time desc
+    <if test="offset != null and limit != null">
+      LIMIT #{offset,jdbcType=INTEGER}, #{limit,jdbcType=INTEGER}
+    </if>
+  </select>
+  <select id="querySalesRecordsCountByCondition" resultType="java.lang.Integer" parameterType="map">
+    select count(id) from sales_records srs
+    <include refid="whereCondition" />
+  </select>
+  <sql id="whereCondition">
+    <where>
+      <if test="isDelete != null" >
+        and srs.is_delete = #{isDelete,jdbcType=CHAR}
+      </if>
+    </where>
+  </sql>
+
+  <insert id="insert" parameterType="cc.congyi.model.SalesRecords" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into sales_records (code, dealer_id, create_time, 
+      last_edit_time, is_delete)
+    values (#{code,jdbcType=VARCHAR}, #{dealerId,jdbcType=INTEGER}, #{createTime,jdbcType=VARCHAR}, 
+      #{lastEditTime,jdbcType=VARCHAR}, #{isDelete,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="cc.congyi.model.SalesRecords" >
+    <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER" >
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into sales_records
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="code != null" >
+        code,
+      </if>
+      <if test="dealerId != null" >
+        dealer_id,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="lastEditTime != null" >
+        last_edit_time,
+      </if>
+      <if test="isDelete != null" >
+        is_delete,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="code != null" >
+        #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="dealerId != null" >
+        #{dealerId,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="lastEditTime != null" >
+        #{lastEditTime,jdbcType=VARCHAR},
+      </if>
+      <if test="isDelete != null" >
+        #{isDelete,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="cc.congyi.model.SalesRecords" >
+    update sales_records
+    <set >
+      <if test="code != null" >
+        code = #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="dealerId != null" >
+        dealer_id = #{dealerId,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="lastEditTime != null" >
+        last_edit_time = #{lastEditTime,jdbcType=VARCHAR},
+      </if>
+      <if test="isDelete != null" >
+        is_delete = #{isDelete,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="cc.congyi.model.SalesRecords" >
+    update sales_records
+    set code = #{code,jdbcType=VARCHAR},
+      dealer_id = #{dealerId,jdbcType=INTEGER},
+      create_time = #{createTime,jdbcType=VARCHAR},
+      last_edit_time = #{lastEditTime,jdbcType=VARCHAR},
+      is_delete = #{isDelete,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

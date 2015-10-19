@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="OFF" monitorInterval="1800"><!-- log4j定义了8个级别的log（除去OFF和ALL，可以说分为6个级别），优先级从高到低依次为：OFF、FATAL、ERROR、WARN、INFO、DEBUG、TRACE、 ALL-->
+    <appenders>
+        <!--  -->
+        <console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+        </console>
+        <!-- TRACE -->
+        <RollingFile name="RollingFileTrace" fileName="${sys:user.home}/logs/mall-cms/trace.log" filePattern="${sys:user.home}/logs/mall-cms/$${date:yyyy-MM}/trace-%d{yyyy-MM-dd}-%i.log.gz">
+            <Filters>
+                <ThresholdFilter level="TRACE" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout charset="UTF-8" pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100MB"/>
+            </Policies>
+        </RollingFile>
+        <!-- INFO -->
+        <RollingFile name="RollingFileInfo" fileName="${sys:user.home}/logs/mall-cms/info.log" filePattern="${sys:user.home}/logs/mall-cms/$${date:yyyy-MM}/info-%d{yyyy-MM-dd}-%i.log.gz">
+            <Filters>
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout charset="UTF-8" pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100MB"/>
+            </Policies>
+        </RollingFile>
+        <!-- ERROR -->
+        <RollingFile name="RollingFileError" fileName="${sys:user.home}/logs/mall-cms/error.log" filePattern="${sys:user.home}/logs/mall-cms/$${date:yyyy-MM}/error-%d{yyyy-MM-dd}-%i.log.gz">
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout charset="UTF-8" pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100MB"/>
+            </Policies>
+        </RollingFile>
+    </appenders>
+    <!--  -->
+    <loggers>
+        <!--过滤掉spring和hibernate的一些无用的debug信息-->
+        <logger name="org.springframework" level="trace" additivity="true">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="RollingFileTrace"/>
+        </logger>
+        <logger name="com.ibatis" level="trace" additivity="true">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="RollingFileTrace"/>
+        </logger>
+        <logger name="java.sql" level="trace" additivity="true">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="RollingFileTrace"/>
+        </logger>
+        <root level="all">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="RollingFileTrace"/>
+            <appender-ref ref="RollingFileInfo"/>
+            <appender-ref ref="RollingFileError"/>
+        </root>
+    </loggers>
+</configuration>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd  
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd  
+    http://www.springframework.org/schema/tx  http://www.springframework.org/schema/tx/spring-tx.xsd  
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <!--  -->
+	<context:property-placeholder location="classpath:jdbc.properties" />
+	<!--  -->
+	<bean id="basicDataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driver}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+
+		<property name="maxIdle" value="${dbcp2.maxIdle}"/>
+		<property name="minIdle" value="${dbcp2.minIdle}"/>
+		<property name="initialSize" value="${dbcp2.initialSize}"/>
+		<property name="timeBetweenEvictionRunsMillis" value="${dbcp2.timeBetweenEvictionRunsMillis}"/>
+		<property name="poolPreparedStatements" value="${dbcp2.poolPreparedStatements}"/>
+		<property name="maxOpenPreparedStatements" value="${dbcp2.maxOpenPreparedStatements}"/>
+		<property name="removeAbandonedTimeout" value="${dbcp2.removeAbandonedTimeout}"/>
+		<!-- 申请连接时执行validationQuery检测连接是否有效，配置为true会降低性能 -->
+		<property name="testOnBorrow" value="${dbcp2.testOnBorrow}"/>
+		<!-- 归还连接时执行validationQuery检测连接是否有效，配置为true会降低性能  -->
+		<property name="testOnReturn" value="${dbcp2.testOnReturn}"/>
+		<!-- 建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于  timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效。  -->
+		<property name="testWhileIdle" value="${dbcp2.testWhileIdle}"/>
+		<!-- 用来检测连接是否有效的sql，要求是一个查询语句,如果validationQuery为  null，testOnBorrow、testOnReturn、testWhileIdle都不起其作用。 -->
+		<property name="validationQuery" value="${dbcp2.validationQuery}"/>
+	</bean>
+	<!--  -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="basicDataSource" />
+		<property name="typeAliasesPackage" value="cc.congyi.model" />
+		 <property name="configLocation" value="classpath:mybatis-config.xml"></property>
+	</bean>
+	<!---->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="cc.congyi.persistence.mybatis" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+	</bean>
+	<!-- 配置事务管理器 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="basicDataSource" />
+	</bean>
+	<!-- enable component scanning and autowire (beware that this does not enable mapper scanning!) -->    
+    <context:component-scan base-package="cc.congyi.service" />
+	<!-- 注解方式配置事物 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	<!-- 拦截器方式配置事物 -->
+	<tx:advice id="transactionAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="add*" propagation="REQUIRED" />
+			<tx:method name="modify*" propagation="REQUIRED" />
+			<tx:method name="delete*" propagation="REQUIRED" />
+
+			<tx:method name="find*" propagation="SUPPORTS" />
+			<tx:method name="query" propagation="SUPPORTS" />
+			<tx:method name="search*" propagation="SUPPORTS" />
+			<tx:method name="*" propagation="SUPPORTS" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- -->
+	<aop:config>
+		<aop:pointcut id="transactionPointcut" expression="execution(* cc.congyi.service.*.*(..))" />
+		<aop:advisor pointcut-ref="transactionPointcut" advice-ref="transactionAdvice" />
+	</aop:config>
+	
+</beans>

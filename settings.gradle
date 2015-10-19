@@ -1,0 +1,10 @@
+rootProject.name = 'mall-root'
+include 'mall-utils'
+include 'mall-model'
+include 'mall-persistence-mybatis-generator'
+include 'mall-persistence-mybatis'
+include 'mall-service'
+include 'mall-core'
+include 'mall-war-cms'
+include 'mall-war-wechat'
+

@@ -1,0 +1,227 @@
+group 'cc.congyi'
+version '1.0-SNAPSHOT'
+//
+allprojects {
+    apply plugin: 'idea'
+}
+//
+subprojects {
+    apply plugin: 'java'
+    // CheckStyle是一个帮助JAVA开发人员遵守某些编码规范的工具
+    apply plugin: 'checkstyle'
+    // FindBugs 是一个静态分析工具，它检查类或者 JAR 文件，将字节码与一组缺陷模式进行对比以发现可能的问题
+//    apply plugin: 'findbugs'
+    // JDepend工具可以帮助你在开发过程中随时跟踪每个包的依赖性（引用/被引用）
+    apply plugin: 'jdepend'
+    // PMD是一种开源分析Java代码错误的工具。
+    apply plugin: 'pmd'
+    //
+    apply plugin: 'project-report'
+    //
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    //
+    [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+    // 1. Get dependencies from Maven local repository
+    // 2. Get dependencies from Maven central repository
+    repositories {
+        flatDir { dirs "libs" }
+        mavenLocal()
+        mavenCentral()
+//        maven { url 'http://localhost:8081/nexus/content/groups/public' } // 自定义库地址
+    }
+    //
+    jar {
+        manifest {
+            attributes("Implementation-Title": "Gradle")
+        }
+    }
+    //
+    checkstyle{
+        configFile = new File(rootDir, "config/checkstyle/checkstyle.xml")
+        ignoreFailures = true
+    }
+    //
+    pmd {
+        ignoreFailures = true
+    }
+    //
+    ext {
+        springVersion = '4.1.6.RELEASE'
+        log4jVersion = '2.3'
+        jodaTimeVersion = '2.8.2'
+        junitVersion = '4.11'
+        httpclientVersion = '4.3.1'
+        jacksonVersion = '2.5.1'
+        mysqlVersion = '5.1.26'
+        mybatisVersion = '3.3.0'
+        httpclientVersion = '4.4.1'
+        servletApiVersion = '3.1.0'
+        jspApiVersion = '2.2.1-b03'
+        //
+        env = System.getProperty("env") ?: "dev"
+    }
+    dependencies {
+        compile(
+                "joda-time:joda-time:$jodaTimeVersion",
+
+                "org.apache.logging.log4j:log4j-core:$log4jVersion",
+                "org.apache.logging.log4j:log4j-api:$log4jVersion",
+
+                "org.apache.httpcomponents:httpclient:$httpclientVersion",
+                "org.apache.httpcomponents:httpmime:$httpclientVersion",
+
+                "org.apache.commons:commons-lang3:3.4",
+                'org.apache.commons:commons-dbcp2:2.1.1',
+                "commons-fileupload:commons-fileupload:1.3.1",
+                "commons-codec:commons-codec:1.10",
+
+                "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion",
+
+                "mysql:mysql-connector-java:$mysqlVersion",
+
+                "org.aspectj:aspectjrt:1.6.10",
+                "org.aspectj:aspectjweaver:1.7.2",
+
+                "org.mybatis:mybatis:$mybatisVersion",
+                "org.mybatis:mybatis-spring:1.2.0",
+
+                "org.springframework:spring-webmvc:$springVersion",
+                "org.springframework:spring-jdbc:$springVersion",
+                "org.springframework:spring-tx:$springVersion",
+        )
+    }
+}
+//
+configure(subprojects.findAll { it.name.contains('war') }) {
+    apply plugin: 'war'
+    apply plugin: 'jetty'
+    dependencies {
+        compile(
+                project(":mall-utils"),
+                project(":mall-model"),
+                project(":mall-persistence-mybatis"),
+                project(":mall-service"),
+                project(":mall-core"),
+        )
+        providedCompile(
+//                it is because 2.5 and 3.0 have different names:
+//                "javax.servlet:javax.servlet-api:$servletApiVersion",
+                "javax.servlet:servlet-api:2.5",
+                "javax.servlet.jsp:jsp-api:$jspApiVersion",
+        )
+        runtime (
+                'javax.servlet:jstl:1.2',
+                'taglibs:standard:1.1.2'
+        )
+        //
+        ext.rootProjectLibs = new File(rootProject.rootDir, 'libs').getAbsolutePath()
+        ext.jarTree = fileTree(dir: rootProjectLibs, include: '**/*.jar')
+        compile jarTree
+
+    }
+    sourceSets {
+        main {
+            resources {
+                srcDirs = ["src/main/resources/public", "src/main/resources/$env"]
+            }
+        }
+    }
+    /*将src/main/java编译的class打包成${project.name}-${version}.jar放入到build/libs目录下,配置文件没必要打包*/
+    task jarWithoutResources(type: Jar) {
+        baseName project.name
+        from("$buildDir/classes/main")
+    }
+    /*将前一步打包的jar文件放入WEB-INF/lib目录下*/
+    war {
+        dependsOn jarWithoutResources
+        from("$projectDir/src/main/resources") {
+            include "*.properties"
+            into("WEB-INF/classes")
+        }
+        classpath = classpath - sourceSets.main.output
+        classpath fileTree(dir: libsDir, include: "${project.name}-${version}.jar")
+    }
+    task('jarPath') << {
+        configurations.runtime.resolve().each {
+            print it.toString() + ";"
+        }
+    }
+
+}
+//
+project(':mall-persistence-mybatis-generator') {
+    configurations {
+        mybatisGenerator
+    }
+    dependencies {
+        mybatisGenerator "org.mybatis.generator:mybatis-generator-core:1.3.2"
+        mybatisGenerator "mysql:mysql-connector-java:$mysqlVersion"
+    }
+    task mybatisGenerate << {
+        ext.destDir = new File(buildDir, 'mybatisGenerate')
+        destDir.mkdirs()
+        ant.properties['targetProject'] = destDir.path
+        ant.taskdef(
+                name: 'mbgenerator',
+                classname: 'org.mybatis.generator.ant.GeneratorAntTask',
+                classpath: configurations.mybatisGenerator.asPath
+        )
+        ant.mbgenerator(overwrite: true,
+                configfile: 'src/main/resources/generatorConfig.xml', verbose: true) {
+            propertyset {
+                propertyref(name: 'targetProject')
+            }
+        }
+    }
+}
+//
+project(':mall-utils') {
+
+}
+//
+project(':mall-model') {
+
+}
+//
+project(':mall-persistence-mybatis') {
+    dependencies {
+        compile(
+                project(":mall-utils"),
+                project(":mall-model"),
+        )
+    }
+}
+//
+project(':mall-service') {
+    dependencies {
+        compile(
+                project(":mall-utils"),
+                project(":mall-model"),
+                project(":mall-persistence-mybatis"),
+        )
+    }
+}
+//
+project(':mall-core') {
+    dependencies {
+        compile(
+                project(":mall-utils"),
+                project(":mall-model"),
+                project(":mall-service"),
+                "javax.servlet:servlet-api:2.5" //
+        )
+    }
+}
+// Web App for CMS
+project(':mall-war-cms') {
+    httpPort = 9000
+    stopPort = 9450
+    stopKey = 'foo'
+}
+// Web App for Wechat
+project(':mall-war-wechat') {
+    httpPort = 9090
+    stopPort = 9451
+    stopKey = 'foo'
+}
